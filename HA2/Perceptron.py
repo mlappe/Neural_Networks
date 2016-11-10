@@ -25,7 +25,8 @@ class DataReader():
 				yield Datapoint(numpy.array(features),numpy.float32(line[0]))
 
 def constantlearningrate():
-	yield 1
+	while True:
+		yield 1
 
 class Perceptron():
 	def __init__(self,dimensions,*,init_weights = "zeros",init_bias = numpy.float32(0.0),learningrate = constantlearningrate()):
@@ -46,6 +47,7 @@ class Perceptron():
 		return numpy.dot(datapoint.features,self.weights) + self.bias
 
 	def update(self,datapoints):
+		assert type(datapoints) is list
 		learningrate = next(self.learningrate)
 		
 		updates = [(datapoint.goldlabel - self.predict(datapoint)) * datapoint.features * learningrate for datapoint in datapoints]
@@ -55,10 +57,13 @@ class Perceptron():
 if __name__ == "__main__":
 
 	dataset = DataReader("data/iris.setosa-v-rest.train")
-
+	print(Perceptron(5).bias)
+	p = Perceptron(4)
 	for line in dataset:
 		print(line)
+		p.update([line])
+	print(p.weights)
 
 	list(dataset)
 	
-	print(Perceptron(5).bias)
+	
