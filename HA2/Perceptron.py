@@ -50,7 +50,7 @@ class Perceptron():
 		assert type(datapoints) is list
 		learningrate = next(self.learningrate)
 
-		bias_updates = [(datapoint.goldlabel - self.predict(datapoint)) * datapoint.bias * learningrate for datapoint in datapoints]
+		bias_updates = [(datapoint.goldlabel - self.predict(datapoint)) * learningrate for datapoint in datapoints]
 		updates = [(datapoint.goldlabel - self.predict(datapoint)) * datapoint.features * learningrate for datapoint in datapoints]
 
 		self.bias += sum(bias_updates)
