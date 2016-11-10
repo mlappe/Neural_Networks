@@ -51,7 +51,8 @@ class Perceptron():
 		learningrate = next(self.learningrate)
 
 		bias_updates = [(datapoint.goldlabel - self.predict(datapoint)) * learningrate for datapoint in datapoints]
-		updates = [(datapoint.goldlabel - self.predict(datapoint)) * datapoint.features * learningrate for datapoint in datapoints]
+		updates = [(datapoint.goldlabel - numpy.sign(self.predict(datapoint))) * datapoint.features * learningrate for datapoint in datapoints]
+		print(updates)
 
 		self.bias += sum(bias_updates)
 		self.weights += sum(updates)
@@ -64,7 +65,7 @@ if __name__ == "__main__":
 	for line in dataset:
 		print(line)
 		p.update([line])
-	print(p.weights)
+	print(p.weights,p.bias)
 
 	list(dataset)
 	
