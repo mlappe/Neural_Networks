@@ -5,7 +5,7 @@ import numpy
 
 Datapoint = namedtuple('Datapoint', ['features', 'goldlabel'])
 
-class DataReader():
+class IrisDataReader():
 
 	def __init__(self,filename):
 		self.filename = filename
@@ -24,12 +24,16 @@ class DataReader():
 
 				yield Datapoint(numpy.array(features),numpy.float32(line[0]))
 
+	def feature_dimensions(self):
+		for datapoint in self:
+			 return len(datapoint.features)
+
 def constantlearningrate():
 	while True:
 		yield 1
 
 class Perceptron():
-	def __init__(self,dimensions,*,init_weights = "zeros",init_bias = numpy.float32(0.0),learningrate = constantlearningrate()):
+	def __init__(self,dimensions,*,init_weights = "zeros",init_bias = numpy.float32(1),learningrate = constantlearningrate()):
 		
 
 		if init_weights == "zeros":
@@ -50,23 +54,24 @@ class Perceptron():
 		assert type(datapoints) is list
 		learningrate = next(self.learningrate)
 
-		bias_updates = [(datapoint.goldlabel - self.predict(datapoint)) * learningrate for datapoint in datapoints]
-		updates = [(datapoint.goldlabel - numpy.sign(self.predict(datapoint))) * datapoint.features * learningrate for datapoint in datapoints]
-		print(updates)
+		bias_updates = [0.5 * (datapoint.goldlabel - self.predict(datapoint)) * learningrate for datapoint in datapoints]
+		updates = [0.5 * (datapoint.goldlabel - numpy.sign(self.predict(datapoint))) * datapoint.features * learningrate for datapoint in datapoints]
 
-		self.bias += sum(bias_updates)
-		self.weights += sum(updates)
+		self.bias += sum(bias_updates) * 1/len(datapoints)
+		self.weights += sum(updates) * 1/len(datapoints)
+
+class Experiment():
+	def __init__(self,trainset,testset,*,batchsize = 1):
+
+		assert trainset.feature_dimensions() == testset.feature_dimensions()
+
+		self.perceptron = Perceptron(trainset.feature_dimensions())
 
 if __name__ == "__main__":
 
-	dataset = DataReader("data/iris.setosa-v-rest.train")
-	print(Perceptron(5).bias)
-	p = Perceptron(4)
-	for line in dataset:
-		print(line)
-		p.update([line])
-	print(p.weights,p.bias)
+	trainset = IrisDataReader("data/iris.setosa-v-rest.train")
+	testset = IrisDataReader("data/iris.setosa-v-rest.test")
 
-	list(dataset)
+	e = Experiment(trainset,testset)
 	
 	
