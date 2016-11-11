@@ -1,5 +1,6 @@
 from collections import namedtuple
 import numpy
+import random
 
 
 
@@ -24,6 +25,8 @@ class IrisDataReader():
 
 				yield Datapoint(numpy.array(features),numpy.float32(line[0]))
 
+
+
 	def feature_dimensions(self):
 		for datapoint in self:
 			 return len(datapoint.features)
@@ -32,10 +35,15 @@ def constantlearningrate():
 	while True:
 		yield 1
 
+def desclearningrate(n=1):
+	i = 1
+	while True:
+		yield n/i
+
 class Perceptron():
+
 	def __init__(self,dimensions,*,init_weights = "zeros",init_bias = numpy.float32(1),learningrate = constantlearningrate()):
 		
-
 		if init_weights == "zeros":
 			self.weights = numpy.zeros(dimensions)
 		else:
@@ -47,8 +55,13 @@ class Perceptron():
 
 		self.learningrate = learningrate
 
+
+
 	def predict(self,datapoint):
 		return numpy.dot(datapoint.features,self.weights) + self.bias
+
+
+
 
 	def update(self,datapoints):
 		assert type(datapoints) is list
@@ -60,18 +73,49 @@ class Perceptron():
 		self.bias += sum(bias_updates) * 1/len(datapoints)
 		self.weights += sum(updates) * 1/len(datapoints)
 
+Results = namedtuple('Results', ['all', 'correct', 'misclassified'])
+
 class Experiment():
-	def __init__(self,trainset,testset,*,batchsize = 1):
+
+	def __init__(self,trainset,testset,*,batchsize = 1,learningrate = desclearningrate(),epochs = 1):
 
 		assert trainset.feature_dimensions() == testset.feature_dimensions()
 
-		self.perceptron = Perceptron(trainset.feature_dimensions())
+		self.trainset, self.testset = trainset,testset
+		self.batchsize, self.epochs = batchsize, epochs
+		self.perceptron = Perceptron(trainset.feature_dimensions(),learningrate = learningrate)
+
+	def run(self):
+		self._train(self.trainset,batchsize = self.batchsize,epochs=self.epochs)
+		return self._evaluate(self.testset)
+
+	def _train(self,trainset,*,epochs = 1, batchsize = 1):
+
+		datacount = len(list(trainset))
+		for _ in range(epochs):
+			for _ in range(datacount//batchsize):
+				self.perceptron.update(random.sample(list(trainset),batchsize))
+
+	def _evaluate(self,testset):
+
+		correctness = [self.perceptron.predict(datapoint) * datapoint.goldlabel for datapoint in testset]
+
+		count_correct = 0
+		count_false = 0
+		for i in correctness:
+			if i > 0:
+				count_correct += 1
+			else:
+				count_false += 1
+
+		return Results(count_correct+count_false,count_correct,count_false)
 
 if __name__ == "__main__":
 
 	trainset = IrisDataReader("data/iris.setosa-v-rest.train")
 	testset = IrisDataReader("data/iris.setosa-v-rest.test")
 
-	e = Experiment(trainset,testset)
+	e = Experiment(trainset,testset,epochs = 20)
+	print(e.run())
 	
 	
