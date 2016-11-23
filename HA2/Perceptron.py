@@ -85,7 +85,7 @@ Results = namedtuple('Results', ['all', 'correct', 'misclassified'])
 
 class Experiment():
 
-	def __init__(self,trainset,testset,*,batchsize = 1,learningrate = desclearningrate(),epochs = 1):
+	def __init__(self,trainset,testset,*,batchsize = float("infinity"),learningrate = desclearningrate(),epochs = 1):
 
 		assert trainset.feature_dimensions() == testset.feature_dimensions()
 
@@ -125,10 +125,18 @@ if __name__ == "__main__":
 	trainset = IrisDataReader("data/iris.setosa-v-rest.train")
 	testset = IrisDataReader("data/iris.setosa-v-rest.test")
 
+	print()
+
+	e0 = Experiment(trainset,testset,epochs = 1, batchsize = float("infinity"), learningrate = constantlearningrate())
+	print("batch experiment:")
+	print(e0.run(),"\n")
+
 	e1 = Experiment(trainset,testset,epochs = 1, batchsize = 10, learningrate = constantlearningrate())
-	print(e1.run())
+	print("minibatch experiment:")
+	print(e1.run(),"\n")
 
 	e2 = Experiment(trainset,testset,epochs = 1, batchsize = 1, learningrate = desclearningrate())
-	print(e2.run())
+	print("stochastic experiment:")
+	print(e2.run(),"\n")
 	
 	
