@@ -10,12 +10,10 @@ class IrisDataReader():
 
 	def __init__(self,filename):
 		self.filename = filename
+		self._read()
 
-	def __iter__(self):
-		"""
-		iterates over all datapoints in the file
-		yields Datapoint objects, not the string
-		"""
+	def _read(self):
+		self.data = []
 		with open(self.filename) as f:
 			for line in f:
 
@@ -23,7 +21,17 @@ class IrisDataReader():
 				line = line.split(" ")
 				features = [float(dim.split(":")[1]) for dim in line[1:]]
 
-				yield Datapoint(numpy.array(features),numpy.float32(line[0]))
+				self.data.append(Datapoint(numpy.array(features),numpy.float32(line[0])))
+
+	def __iter__(self):
+		for datapoint in self.data:
+			yield datapoint
+
+	def __len__(self):
+		return len(self.data)
+
+	def __getitem__(self,key):
+		return self.data[key]
 
 
 
@@ -42,7 +50,7 @@ def desclearningrate(n=1):
 
 class Perceptron():
 
-	def __init__(self,dimensions,*,init_weights = "zeros",init_bias = numpy.float32(1),learningrate = constantlearningrate()):
+	def __init__(self,dimensions,*,init_weights = "zeros",init_bias = numpy.float32(1),learningrate = desclearningrate()):
 		
 		if init_weights == "zeros":
 			self.weights = numpy.zeros(dimensions)
@@ -67,7 +75,7 @@ class Perceptron():
 		assert type(datapoints) is list
 		learningrate = next(self.learningrate)
 
-		bias_updates = [0.5 * (datapoint.goldlabel - self.predict(datapoint)) * learningrate for datapoint in datapoints]
+		bias_updates = [0.5 * (datapoint.goldlabel - numpy.sign(self.predict(datapoint))) * learningrate for datapoint in datapoints]
 		updates = [0.5 * (datapoint.goldlabel - numpy.sign(self.predict(datapoint))) * datapoint.features * learningrate for datapoint in datapoints]
 
 		self.bias += sum(bias_updates) * 1/len(datapoints)
@@ -82,7 +90,7 @@ class Experiment():
 		assert trainset.feature_dimensions() == testset.feature_dimensions()
 
 		self.trainset, self.testset = trainset,testset
-		self.batchsize, self.epochs = batchsize, epochs
+		self.batchsize, self.epochs = min(len(trainset),batchsize), epochs
 		self.perceptron = Perceptron(trainset.feature_dimensions(),learningrate = learningrate)
 
 	def run(self):
@@ -91,10 +99,12 @@ class Experiment():
 
 	def _train(self,trainset,*,epochs = 1, batchsize = 1):
 
-		datacount = len(list(trainset))
+		datacount = len(trainset)
 		for _ in range(epochs):
+			assert batchsize <= datacount
 			for _ in range(datacount//batchsize):
-				self.perceptron.update(random.sample(list(trainset),batchsize))
+				batch = random.sample(list(trainset),batchsize)
+				self.perceptron.update(batch)
 
 	def _evaluate(self,testset):
 
@@ -115,7 +125,10 @@ if __name__ == "__main__":
 	trainset = IrisDataReader("data/iris.setosa-v-rest.train")
 	testset = IrisDataReader("data/iris.setosa-v-rest.test")
 
-	e = Experiment(trainset,testset,epochs = 20)
-	print(e.run())
+	e1 = Experiment(trainset,testset,epochs = 1, batchsize = 10, learningrate = constantlearningrate())
+	print(e1.run())
+
+	e2 = Experiment(trainset,testset,epochs = 1, batchsize = 1, learningrate = desclearningrate())
+	print(e2.run())
 	
 	
