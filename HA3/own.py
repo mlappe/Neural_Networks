@@ -1,4 +1,5 @@
 import tensorflow as tf
+import collections
 
 from tensorflow.examples.tutorials.mnist import input_data
 mnist = input_data.read_data_sets("../MNIST_data/", one_hot=True)
@@ -42,31 +43,75 @@ class Layer():
 		outputs = [cell.output(data) for cell in self.cells]
 		return tf.concat(1,outputs)
 
+Result = collections.namedtuple("Result",["Iteration","Testaccuracy","Trainaccuracy"])
+
+class Experiment():
+	def __init__(self,*,layer1_outputsize = 10,layer1_size = 20,iterations = 1000):
+		self.layer1_outputsize = layer1_outputsize
+		self.layer1_size = layer1_size
+		self.iterations = iterations
+
+	def run_stepwise(self):
+
+		x = tf.placeholder(tf.float32, [None, 784])
+		layer1 = Layer(lambda : Perceptron(784,self.layer1_outputsize,activation_function = tf.sigmoid),self.layer1_size)
+		layer2 = Layer(lambda : Perceptron(self.layer1_outputsize * self.layer1_size,10),1)
+		y = tf.nn.softmax(layer2.output(layer1.output(x)))
+
+		y_ = tf.placeholder(tf.float32, [None, 10])
+
+		cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
+
+		train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
+
+		init = tf.initialize_all_variables()
+
+
+
+		with tf.Session() as sess:
+
+			sess.run(init)
+
+
+			for i in range(self.iterations):
+				batch_xs, batch_ys = mnist.train.next_batch(100)
+				sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
+
+				correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
+
+				accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+
+				testaccuracy =  sess.run(accuracy, feed_dict={x: mnist.test.images, y_: mnist.test.labels})
+				trainaccuracy = 1# sess.run(accuracy, feed_dict={x: mnist.train.images, y_: mnist.train.labels})
+
+				yield Result(i,testaccuracy,trainaccuracy)
+
+	def run(self):
+		return list(self.run_stepwise())
+
+
 
 if __name__ == "__main__":
-	x = tf.placeholder(tf.float32, [None, 784])
-	layer1 = Layer(lambda : Perceptron(784,10,activation_function = tf.sigmoid),20)
-	layer2 = Layer(lambda : Perceptron(200,10),1)
-	y = tf.nn.softmax(layer2.output(layer1.output(x)))
 
-	y_ = tf.placeholder(tf.float32, [None, 10])
+	results = []
+	for result in Experiment(iterations = 1000).run_stepwise():
+		print(result)
+		results.append(result)
 
-	cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
+	import matplotlib as mpl
+	mpl.use('Agg')
+	import matplotlib.pyplot as pyplot
 
-	train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
+	x,testaccuracy,trainaccuracy = zip(*results)
+	
+	testcurve = pyplot.plot(x,testaccuracy,label="testaccuracy")
+	traincurve = pyplot.plot(x,trainaccuracy,label="trainaccuracy")
+	pyplot.legend(loc="upper left")
 
-	init = tf.initialize_all_variables()
+	pyplot.savefig('layer1size20.png')
+	 
+	
 
-	with tf.Session() as sess:
-
-		sess.run(init)
+		
 
 
-		for i in range(1000):
-			batch_xs, batch_ys = mnist.train.next_batch(100)
-			sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
-
-		correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
-
-		accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-		print(sess.run(accuracy, feed_dict={x: mnist.test.images, y_: mnist.test.labels}))
