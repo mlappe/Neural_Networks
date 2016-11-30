@@ -58,11 +58,13 @@ class Experiment():
 		layer2 = Layer(lambda : Perceptron(self.layer1_outputsize * self.layer1_size,10),1)
 		y = tf.nn.softmax(layer2.output(layer1.output(x)))
 
+		learning_rate = tf.placeholder(tf.float32, shape=[])
+
 		y_ = tf.placeholder(tf.float32, [None, 10])
 
 		cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
 
-		train_step = tf.train.GradientDescentOptimizer(0.5).minimize(cross_entropy)
+		train_step = tf.train.GradientDescentOptimizer(learning_rate = learning_rate).minimize(cross_entropy)
 
 		init = tf.initialize_all_variables()
 
@@ -75,7 +77,7 @@ class Experiment():
 
 			for i in range(self.iterations):
 				batch_xs, batch_ys = mnist.train.next_batch(100)
-				sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys})
+				sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys, learning_rate: 0.5})
 
 				correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
 
