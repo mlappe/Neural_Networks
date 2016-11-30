@@ -52,14 +52,20 @@ def desclearningrate(n=1):
 	while True:
 		yield n/i
 
+def bottou_learning_rate(n=1.0,l=1.0):
+	i = 1
+	while True:
+		yield n/(1+n*l*i)
+
 Result = collections.namedtuple("Result",["Iteration","Testaccuracy","Trainaccuracy"])
 
 class Experiment():
-	def __init__(self,*,layer1_outputsize = 10,layer1_size = 20,iterations = 1000,learning_rate = constantlearningrate(n=0.5)):
+	def __init__(self,*,layer1_outputsize = 10,layer1_size = 20,iterations = 1000,learning_rate = constantlearningrate(n=0.5),momentum = None):
 		self.layer1_outputsize = layer1_outputsize
 		self.layer1_size = layer1_size
 		self.iterations = iterations
 		self.learning_rate = learning_rate
+		self.momentum = momentum
 
 	def run_stepwise(self):
 
@@ -74,7 +80,13 @@ class Experiment():
 
 		cross_entropy = tf.reduce_mean(-tf.reduce_sum(y_ * tf.log(y), reduction_indices=[1]))
 
-		train_step = tf.train.GradientDescentOptimizer(learning_rate = learning_rate).minimize(cross_entropy)
+		if self.momentum  == None:
+
+			train_step = tf.train.GradientDescentOptimizer(learning_rate = learning_rate).minimize(cross_entropy)
+	
+		else:
+
+			train_step = tf.train.MomentumOptimizer(learning_rate = learning_rate, momentum = self.momentum).minimize(cross_entropy)
 
 		init = tf.initialize_all_variables()
 
@@ -120,7 +132,7 @@ if __name__ == "__main__":
 
 	print("Perceptron with 10 cells in hidden layer")
 	results = []
-	for result in Experiment(iterations = 100,layer1_size = 10).run_stepwise():
+	for result in Experiment(iterations = 1000,layer1_size = 10).run_stepwise():
 		print(result)
 		results.append(result)
 
@@ -129,7 +141,7 @@ if __name__ == "__main__":
 	print("Perceptron with 40 cells in hidden layer")
 
 	results = []
-	for result in Experiment(iterations = 100,layer1_size = 40).run_stepwise():
+	for result in Experiment(iterations = 1000,layer1_size = 40).run_stepwise():
 		print(result)
 		results.append(result)
 
@@ -137,11 +149,78 @@ if __name__ == "__main__":
 	
 	print("Perceptron with 20 cells in hidden layer")
 	results = []
-	for result in Experiment(iterations = 100,layer1_size = 20).run_stepwise():
+	for result in Experiment(iterations = 1000,layer1_size = 20).run_stepwise():
 		print(result)
 		results.append(result)
 
 	create_image("hiddenlayer20.png.png",results)
+
+
+	print("adaptice learning rates:")
+
+	print("descending n = 0.5")
+	results = []
+	for result in Experiment(iterations = 1000,
+				layer1_size = 20,
+				learning_rate = desclearningrate(n=0.5)).run_stepwise():
+		print(result)
+		results.append(result)
+
+	create_image("bottou_l05.png.png",results)
+
+	print("descending n = 0.25")
+	results = []
+	for result in Experiment(iterations = 1000,
+				layer1_size = 20,
+				learning_rate = desclearningrate(n=0.25)).run_stepwise():
+		print(result)
+		results.append(result)
+
+	create_image("bottou_l025.png.png",results)
+
+
+	print("Bottou l = 0.5")
+	results = []
+	for result in Experiment(iterations = 1000,
+				layer1_size = 20,
+				learning_rate = bottou_learning_rate(l=0.5)).run_stepwise():
+		print(result)
+		results.append(result)
+
+	create_image("bottou_l05.png.png",results)
+
+	print("Bottou l = 0.25")
+	results = []
+	for result in Experiment(iterations = 1000,
+				layer1_size = 20,
+				learning_rate = bottou_learning_rate(l=0.25)).run_stepwise():
+		print(result)
+		results.append(result)
+
+	create_image("bottou_l025.png.png",results)
+
+	print("now with momentum")
+
+	print("Momentum = 0.8")
+	results = []
+	for result in Experiment(iterations = 1000,
+				layer1_size = 20,
+				momentum = 0.8).run_stepwise():
+		print(result)
+		results.append(result)
+
+	create_image("momentum 08.png.png",results)
+
+	print("Momentum = 0.9")
+	results = []
+	for result in Experiment(iterations = 1000,
+				layer1_size = 20,
+				momentum = 0.9).run_stepwise():
+		print(result)
+		results.append(result)
+
+	create_image("momentum 09.png.png",results)
+
 
 
 
