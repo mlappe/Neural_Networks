@@ -43,13 +43,23 @@ class Layer():
 		outputs = [cell.output(data) for cell in self.cells]
 		return tf.concat(1,outputs)
 
+def constantlearningrate(n=1):
+	while True:
+		yield n
+
+def desclearningrate(n=1):
+	i = 1
+	while True:
+		yield n/i
+
 Result = collections.namedtuple("Result",["Iteration","Testaccuracy","Trainaccuracy"])
 
 class Experiment():
-	def __init__(self,*,layer1_outputsize = 10,layer1_size = 20,iterations = 1000):
+	def __init__(self,*,layer1_outputsize = 10,layer1_size = 20,iterations = 1000,learning_rate = constantlearningrate(n=0.5)):
 		self.layer1_outputsize = layer1_outputsize
 		self.layer1_size = layer1_size
 		self.iterations = iterations
+		self.learning_rate = learning_rate
 
 	def run_stepwise(self):
 
@@ -77,7 +87,7 @@ class Experiment():
 
 			for i in range(self.iterations):
 				batch_xs, batch_ys = mnist.train.next_batch(100)
-				sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys, learning_rate: 0.5})
+				sess.run(train_step, feed_dict={x: batch_xs, y_: batch_ys, learning_rate: next(self.learning_rate)})
 
 				correct_prediction = tf.equal(tf.argmax(y,1), tf.argmax(y_,1))
 
