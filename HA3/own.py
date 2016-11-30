@@ -82,22 +82,14 @@ class Experiment():
 				accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
 				testaccuracy =  sess.run(accuracy, feed_dict={x: mnist.test.images, y_: mnist.test.labels})
-				trainaccuracy = 1# sess.run(accuracy, feed_dict={x: mnist.train.images, y_: mnist.train.labels})
+				trainaccuracy = sess.run(accuracy, feed_dict={x: mnist.train.images, y_: mnist.train.labels})
 
 				yield Result(i,testaccuracy,trainaccuracy)
 
 	def run(self):
 		return list(self.run_stepwise())
 
-
-
-if __name__ == "__main__":
-
-	results = []
-	for result in Experiment(iterations = 1000).run_stepwise():
-		print(result)
-		results.append(result)
-
+def create_image(name,results):
 	import matplotlib as mpl
 	mpl.use('Agg')
 	import matplotlib.pyplot as pyplot
@@ -108,7 +100,42 @@ if __name__ == "__main__":
 	traincurve = pyplot.plot(x,trainaccuracy,label="trainaccuracy")
 	pyplot.legend(loc="upper left")
 
-	pyplot.savefig('layer1size20.png')
+	pyplot.savefig(name)
+
+
+
+if __name__ == "__main__":
+
+	print("Perceptron 10 iterations")
+	results = []
+	for result in Experiment(iterations = 10).run_stepwise():
+		print(result)
+		results.append(result)
+
+	create_image("normal10iter.png",results)
+
+	print("Perceptron 100 iterations")
+
+	results = []
+	for result in Experiment(iterations = 100).run_stepwise():
+		print(result)
+		results.append(result)
+
+	create_image("normal100iter.png",results)
+	
+	print("Perceptron 1000 iterations")
+	results = []
+	for result in Experiment(iterations = 1000).run_stepwise():
+		print(result)
+		results.append(result)
+
+	create_image("normal1000iter.png",results)
+
+
+
+
+
+	
 	 
 	
 
