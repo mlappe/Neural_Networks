@@ -106,30 +106,30 @@ def create_image(name,results):
 
 if __name__ == "__main__":
 
-	print("Perceptron 10 iterations")
+	print("Perceptron with 10 cells in hidden layer")
 	results = []
-	for result in Experiment(iterations = 10).run_stepwise():
+	for result in Experiment(iterations = 100,layer1_size = 10).run_stepwise():
 		print(result)
 		results.append(result)
 
-	create_image("normal10iter.png",results)
+	create_image("hiddenlayer10.png",results)
 
-	print("Perceptron 100 iterations")
+	print("Perceptron with 40 cells in hidden layer")
 
 	results = []
-	for result in Experiment(iterations = 100).run_stepwise():
+	for result in Experiment(iterations = 100,layer1_size = 40).run_stepwise():
 		print(result)
 		results.append(result)
 
-	create_image("normal100iter.png",results)
+	create_image("hiddenlayer40.png",results)
 	
-	print("Perceptron 1000 iterations")
+	print("Perceptron with 20 cells in hidden layer")
 	results = []
-	for result in Experiment(iterations = 1000).run_stepwise():
+	for result in Experiment(iterations = 100,layer1_size = 20).run_stepwise():
 		print(result)
 		results.append(result)
 
-	create_image("normal1000iter.png",results)
+	create_image("hiddenlayer20.png.png",results)
 
 
 
