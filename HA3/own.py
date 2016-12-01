@@ -125,6 +125,7 @@ def create_image(name,results):
 	pyplot.legend(loc="upper left")
 
 	pyplot.savefig(name)
+	pyplot.clf()
 
 
 
